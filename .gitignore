@@ -1,5 +1,6 @@
 # ===== 密钥与环境（永不入库）=====
 .env
+AGENTS.local.md
 .env.local
 .env.*.local
 
@@ -10,8 +11,8 @@ __pycache__/
 *.egg-info/
 
 # ===== Django 运行产物 =====
-db.sqlite3
-db.sqlite3-journal
+# 通配 *.sqlite3*：主库 + WAL 伴生（-wal/-shm）+ 回滚日志一并拦截（独立审查 P1 修复，2026-10-24 用户批准）
+*.sqlite3*
 media/
 staticfiles/
 

@@ -21,13 +21,9 @@
 - **禁改清单**（definition-of-done.md §7）：.env、已合并迁移、db.sqlite3、media/、其他任务白名单文件
 - 迁移只经 makemigrations；已合并 main 的迁移永不修改
 
-## 本机环境注意（Windows）
+## 本机环境注意
 
-- 统一使用 **PowerShell 7**（`pwsh`）；git 2.50；Python 3.14.6（`D:\DevEnv\Workspace\py3.14.6`）
-- 虚拟环境：项目内 `.venv/`，**不碰全局 Python、不改系统环境变量、不升级全局工具**
-- pip 已配阿里云镜像（勿改）；依赖只进 requirements/*.txt 且精确锁定版本
-- 本机有代理残留断网坑：git/GitHub 连不上时**先查代理**（Clash 残留 127.0.0.1:7897）
-- 本仓库 V1 **不需要 Node.js**
+维护者本机专属信息（Python 具体路径、镜像配置、代理排查等）见 `AGENTS.local.md`——该文件**不入库**（已登记 .gitignore）。通用规则不变：项目内 `.venv/`、不碰全局环境、依赖精确锁版、本仓库 V1 无 Node.js。
 
 ## 状态与汇报
 
