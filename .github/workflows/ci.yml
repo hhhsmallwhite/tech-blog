@@ -29,8 +29,8 @@ jobs:
       - name: 安装依赖
         run: python -m pip install -r requirements/dev.txt
       - name: 门禁 1｜ruff check
-        run: ruff check .
+        run: python -m ruff check .
       - name: 门禁 2｜ruff format --check
-        run: ruff format --check .
+        run: python -m ruff format --check .
       - name: 门禁 3｜pytest
-        run: pytest
+        run: python -m pytest
