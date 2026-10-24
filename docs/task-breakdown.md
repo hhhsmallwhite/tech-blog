@@ -1,10 +1,11 @@
 # 开发任务清单与完成定义（第一版实施计划）
 
-> 文档版本：v4.1
-> 文档状态：**已批准**（v4.0 基线 2026-10-24 用户确认；v4.1 微调 2026-10-24 用户照准）
+> 文档版本：v4.2
+> 文档状态：**已批准**（v4.0 基线 2026-10-24 用户确认；v4.1/v4.2 微调均 2026-10-24 用户照准）
 > 编写日期：2026-10-23（v4.0 结构整合：2026-10-24）
 > v4.0 修订：①通用完成定义迁出为 `definition-of-done.md`（本文 §2 改为指针；"DoD §N"指向该文档）②范围三区/可选增强、风险汇总、用户待办、PLN 决策迁至 `development-plan.md`（§3.4/§12/§14/§15/§16 留指针）③协作细则指向 `development-workflow.md`（原 collaboration-rules.md v1.0 并入，文件已删除）④T-001 白名单按已批准工程初始化方案 v1.0 扩充（+AGENTS.md、.env.example、static/vendor/README.md）⑤41 张任务卡业务内容未改动
 > v4.1 修订（2026-10-24 用户照准）：T-002 提交白名单补充 `config/__init__.py`、`config/tests/__init__.py`（v4.0 字面清单遗漏的包标志文件，缺它 Django 包不可导入）；其余 41 张任务卡内容零改动
+> v4.2 修订（2026-10-24 用户照准）：T-004 提交白名单补充 manage.py 的 shebang 移除（CI 首跑发现 EXE001 跨平台缺陷：Windows 无可执行位致本地检查盲区，Linux CI 报错——CI 上线即捕获的真实缺陷）；其余零改动
 > **目标**：把已批准的设计文档转化为可执行、可测试、可审查、**可举证**的第一版开发任务序列
 > 上游输入（执行者必读，随本计划一起传递）：`requirements-analysis.md` v1.1（已批准）、`technology-decisions.md` v1.0（D-01～D-09 已确认）、`architecture.md`、`database-design.md`、`api-design.md`、`security-design.md`、`deployment-design.md`（五份均 2026-10-23 已批准）
 > 文档边界：只定义任务、依赖、验收、完成定义与执行规则；不含业务代码与测试代码，不执行任何任务
@@ -196,7 +197,7 @@ V1 必须（T-001～T-039）／可选增强／未来规划的权威清单与触�
 - **对应章节**：deployment §5；ADR-07
 - **目标**：PR 自动跑前两道门禁，分支保护生效
 - **前置依赖**：T-003
-- **修改范围（提交白名单）**：.github/workflows/ci.yml
+- **修改范围（提交白名单）**：.github/workflows/ci.yml、manage.py（仅限 shebang 一行移除——v4.2 依 CI 发现的 EXE001 跨平台缺陷补入）
 - **实施内容**：①workflow：装依赖→ruff check→ruff format --check→pytest ②Actions 按 SHA 固定 ③pip 缓存 ④启用 main 分支保护必过检查（T-001 遗留项收口）
 - **验收标准**：预期行为：每个 PR 自动执行四步并给出红绿结论；故意违规必红。
   - 正常：PR CI 绿且连续两次稳定（两次 run 链接留 PR）
