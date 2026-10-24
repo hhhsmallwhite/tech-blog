@@ -1,0 +1,23 @@
+# 工具配置（T-003 交付物）——本项目不发布 Python 包，此文件只承载开发约定
+# 依据：task-breakdown T-003、DoD §4 检查项基线、独立评审裁决 A1
+
+[tool.ruff]
+target-version = "py314"
+
+[tool.ruff.lint]
+# 规则集保持 ruff 默认（不显式 select，显式 select 会覆盖默认集）；
+# V1 不扩围——扩规则集走独立评审升版
+
+[tool.ruff.lint.per-file-ignores]
+# settings 四拆的固有形态：dev.py 先 load_dotenv 再 import base（E402：import 不在顶部），
+# 四个环境模块用 star-import 继承 base（F403）。
+# 依据：T-002 独立评审发现①裁决 A1（豁免范围仅限 settings 目录）
+"config/settings/*" = ["E402", "F403"]
+
+[tool.pytest.ini_options]
+python_files = ["test_*.py"]
+addopts = "-ra"
+# 刻意不设 DJANGO_SETTINGS_MODULE：config.settings.test 对 8 个环境变量 fail-fast，
+# 若在此绑定，裸跑 pytest（未准备环境变量）会在收集前失败——违反 T-003 卡目标行
+# "新环境 30 分钟内可开发，检查命令一键可跑"。pytest-django 与 test settings 的绑定
+# 随 T-005（首个需要数据库的测试）经根 conftest.py 落地，届时升版本注释。

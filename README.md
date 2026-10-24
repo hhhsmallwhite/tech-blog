@@ -19,11 +19,49 @@ python -m venv .venv
 # Linux/macOS：source .venv/bin/activate
 pip install -r requirements/dev.txt
 copy .env.example .env   # Linux: cp；SECRET_KEY 换成自己生成的值
-pytest                   # T-002 完成后：全绿
-python manage.py runserver  # T-002 完成后：http://127.0.0.1:8000
+pytest                   # 应全绿（当前 16 例）
+python manage.py runserver   # http://127.0.0.1:8000
 ```
 
-> 当前处于 M0 初始化期：`pytest` 与 `runserver` 在 T-002（Django 脚手架）合并后可用。
+## 开发指南
+
+### 检查命令（每任务必过，DoD §4 基线）
+
+```bash
+ruff format --check .    # 格式检查
+ruff check .             # 静态检查
+pytest                   # 全部测试（规则配置见 pyproject.toml）
+```
+
+- 类型检查（mypy）按已批准决策后置到上线稳定后（`definition-of-done.md` §4 不适用声明）
+- Playwright 端到端测试 M5 起启用（当前在 dev.txt 中注释）
+
+### 日常命令
+
+```bash
+python manage.py check                  # 配置自检（dev，自动读 .env）
+python manage.py runserver              # 开发服务器（自动读 .env，默认 dev 配置）
+```
+
+### 生产配置检查（用得少）
+
+`python manage.py check --deploy --settings=config.settings.prod`——注意 **prod 只认 shell 环境变量、不读 .env**，缺任何一个变量都会启动失败并点名缺失变量（fail-fast 是设计行为，不是故障）。先导出 8 个变量（清单与含义见 `.env.example`）再执行：
+
+```powershell
+$env:SECRET_KEY="<随机长串>"; $env:DEBUG="False"; $env:SITE_URL="http://127.0.0.1:8000"; $env:ALLOWED_HOSTS="localhost,127.0.0.1"; $env:COOKIE_SECURE="False"; $env:BACKUP_DIR="./backups"; $env:HEALTHZ_DISK_THRESHOLD="10"; $env:HEALTHZ_BACKUP_MAX_AGE="48"
+python manage.py check --deploy --settings=config.settings.prod
+```
+
+> CI 自 T-031 起自动执行本检查；当前（M0）无 CI，需要时手动跑。
+
+### 迁移与测试数据
+
+当前**没有数据库迁移**（框架迁移按 T-005 任务卡首次产出）。`makemigrations`/`migrate`/`createsuperuser` 将在 T-005 完成后可用，届时本节更新操作指南；测试用数据库由 pytest-django 自动创建与销毁（配置随 T-005 落地）。
+
+### 环境变量
+
+8 个必需变量（缺失即启动失败并点名）说明见 `.env.example`，每变量一行注释；dev 模式由 python-dotenv 自动读取 `.env`（选型 v1.2），test/prod 只认真实环境变量。
+
 
 ## 目录结构
 
