@@ -28,12 +28,11 @@ jobs:
           cache: pip
       - name: 创建 CI 虚拟环境并安装依赖
         run: |
-          python -m venv .venv-ci
-          .venv-ci/bin/python -m pip install -r requirements/dev.txt
-          .venv-ci/bin/python -c "import ruff" || echo "::error::ruff-import-failed（环境诊断注记）"
+          python -m venv .venv
+          .venv/bin/python -m pip install -r requirements/dev.txt
       - name: 门禁 1｜ruff check
-        run: .venv-ci/bin/python -m ruff check .
+        run: .venv/bin/python -m ruff check .
       - name: 门禁 2｜ruff format --check
-        run: .venv-ci/bin/python -m ruff format --check .
+        run: .venv/bin/python -m ruff format --check .
       - name: 门禁 3｜pytest
-        run: .venv-ci/bin/python -m pytest
+        run: .venv/bin/python -m pytest
