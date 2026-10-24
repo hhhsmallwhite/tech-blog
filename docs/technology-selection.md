@@ -1,9 +1,9 @@
 # 个人技术博客技术选型分析
 
-> 文档版本：v1.1
-> 文档状态：已确认（决策结论见 `docs/technology-decisions.md`）
+> 文档版本：v1.2
+> 文档状态：已确认（决策结论见 `docs/technology-decisions.md`；v1.2 增补经用户 2026-10-24 批准）
 > 编写日期：2026-10-23
-> 修订日期：2026-10-23（v1.1：修正 CD 构建位置、SQLite 持久化方式、mypy 门禁时机、Python 版本兜底）
+> 修订日期：2026-10-24（v1.2：0.1 主方案表新增 python-dotenv 1.2.4——dev/本地从 `.env` 加载 8 个环境变量，来源 deployment-design §8；v1.1：修正 CD 构建位置、SQLite 持久化方式、mypy 门禁时机、Python 版本兜底）
 > 资料核查日期：2026-10-23
 > 需求基线：`docs/requirements-analysis.md` v1.1（2026-10-23 已批准，Q-01～Q-08 全部落定；原待确认项记录见 11.3）
 > 文档边界：只做技术选型分析与推荐，不创建项目、不安装依赖、不编写业务代码，也不替代后续架构设计。
@@ -20,6 +20,7 @@
 | 后端/全栈 | Django | 5.2.17 LTS | 内置认证、会话、CSRF、Admin、ORM、迁移、模板；服务端渲染，发布即生效 |
 | 数据库 | SQLite | 3.54.1 | 单机、单作者、读多写少；WAL 支持并发读；文件级备份简单 |
 | 数据访问 | Django ORM + 内置迁移 | 随 Django | 与 Admin、认证、测试集成最紧密；后续可迁移 PostgreSQL |
+| 配置加载 | python-dotenv | 1.2.4 | dev/本地从 `.env` 读取 8 个环境变量（deployment §8）；2026-10-24 用户批准新增（方案 B，替代自写解析器） |
 | 前端 | Django 模板 + HTMX + Alpine.js | 随项目 | HTML-first、SEO 友好、首屏轻、无需独立前端构建 |
 | 后台 | Django Admin + ModelAdmin | 随 Django | 文章/项目/关于页 CRUD、草稿/发布、删除确认、密码修改均可复用 |
 | Markdown/高亮 | Python-Markdown + Pygments + nh3 | 以实施时锁定版本为准 | 服务端渲染，SEO 与安全边界清晰；nh3 替换已弃用的 bleach |

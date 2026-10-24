@@ -2,3 +2,6 @@
 # 版本依据：technology-selection.md（核查 5.2.17）；2026-10-24 初始化锁定同 LTS 线最新补丁 5.2.18
 # 安装验证于 T-002 执行（Python 3.14.6，兜底 3.13）
 Django==5.2.18
+
+# .env 加载（dev/本地读取 8 个环境变量，deployment §8；选型 v1.2 增补，2026-10-24 用户批准）
+python-dotenv==1.2.4
