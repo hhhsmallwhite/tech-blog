@@ -1,9 +1,10 @@
 # 开发任务清单与完成定义（第一版实施计划）
 
-> 文档版本：v4.0
-> 文档状态：**已批准**（2026-10-24 用户确认，作为执行基线；变更需评审并升版）
+> 文档版本：v4.1
+> 文档状态：**已批准**（v4.0 基线 2026-10-24 用户确认；v4.1 微调 2026-10-24 用户照准）
 > 编写日期：2026-10-23（v4.0 结构整合：2026-10-24）
 > v4.0 修订：①通用完成定义迁出为 `definition-of-done.md`（本文 §2 改为指针；"DoD §N"指向该文档）②范围三区/可选增强、风险汇总、用户待办、PLN 决策迁至 `development-plan.md`（§3.4/§12/§14/§15/§16 留指针）③协作细则指向 `development-workflow.md`（原 collaboration-rules.md v1.0 并入，文件已删除）④T-001 白名单按已批准工程初始化方案 v1.0 扩充（+AGENTS.md、.env.example、static/vendor/README.md）⑤41 张任务卡业务内容未改动
+> v4.1 修订（2026-10-24 用户照准）：T-002 提交白名单补充 `config/__init__.py`、`config/tests/__init__.py`（v4.0 字面清单遗漏的包标志文件，缺它 Django 包不可导入）；其余 41 张任务卡内容零改动
 > **目标**：把已批准的设计文档转化为可执行、可测试、可审查、**可举证**的第一版开发任务序列
 > 上游输入（执行者必读，随本计划一起传递）：`requirements-analysis.md` v1.1（已批准）、`technology-decisions.md` v1.0（D-01～D-09 已确认）、`architecture.md`、`database-design.md`、`api-design.md`、`security-design.md`、`deployment-design.md`（五份均 2026-10-23 已批准）
 > 文档边界：只定义任务、依赖、验收、完成定义与执行规则；不含业务代码与测试代码，不执行任何任务
@@ -163,7 +164,7 @@ V1 必须（T-001～T-039）／可选增强／未来规划的权威清单与触�
 - **对应章节**：architecture §13/M7、AD-9；deployment §7/§8；security §6
 - **目标**：五包骨架 + 四套 settings + 环境变量 fail-fast，安全配置从第一天就是生产形态
 - **前置依赖**：T-001
-- **修改范围（提交白名单）**：manage.py、config/{settings/{__init__,base,dev,test,prod}.py,urls.py,wsgi.py}、{core,blog,projects,about}/{__init__,apps}.py、.env.example、config/tests/test_settings.py
+- **修改范围（提交白名单）**：manage.py、config/{settings/{__init__,base,dev,test,prod}.py,urls.py,wsgi.py}、{core,blog,projects,about}/{__init__,apps}.py、.env.example、config/tests/test_settings.py、config/__init__.py、config/tests/__init__.py（后两个包标志文件系 v4.1 补入）
 - **实施内容**：①startproject/startapp 布局按 architecture §13 ②settings 拆分：base 公共 + dev/test/prod 差异（deployment §7 表逐行对照）③8 个环境变量 fail-fast：SECRET_KEY/DEBUG/SITE_URL/ALLOWED_HOSTS/COOKIE_SECURE/BACKUP_DIR/HEALTHZ_DISK_THRESHOLD/HEALTHZ_BACKUP_MAX_AGE ④USE_TZ=True、TIME_ZONE=Asia/Shanghai ⑤Admin 启用、根 urls 纯 include（仅 admin 占位）⑥dev 本地 .env 示例
 - **验收标准**：预期行为：`runserver` 正常起服；缺任一必需环境变量时进程启动即失败并指明缺失变量名；prod settings 永远 DEBUG=False。
   - 正常：`manage.py check` 通过；dev 起服返回欢迎页
