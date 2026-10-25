@@ -139,7 +139,9 @@ class TestUniqueConstraints:
 
 def make_publishable(**overrides: object) -> Article:
     """四项守卫字段齐全的最小 Article（可发布底座，缺省走 make_article）。"""
-    return make_article(summary="摘要", body_md="正文", **overrides)
+    base: dict[str, object] = {"summary": "摘要", "body_md": "正文"}
+    base.update(overrides)
+    return make_article(**base)
 
 
 class TestStateMachine:
@@ -171,10 +173,10 @@ class TestStateMachine:
         assert article.status == Article.Status.DRAFT.value
 
     def test_publish_atomic_no_partial_write(self) -> None:
-        # 失败：守卫失败不产生任何部分写入——内存预埋的 status/fp 也不得落库（database §4 行 3）
+        # 失败：守卫失败不产生任何部分写入——内存预埋的首发时间也不得泄漏入库；
+        # 且库中不存在"published 且无首发时间"的半成品行（database §4 行 3 不变量）
         article = make_publishable(body_md="")
         article.save()
-        article.status = Article.Status.PUBLISHED.value
         article.first_published_at = timezone.now()
         with pytest.raises(ValidationError):
             article.publish()
@@ -182,6 +184,9 @@ class TestStateMachine:
         assert article.status == Article.Status.DRAFT.value
         assert article.first_published_at is None
         assert not Article.objects.published().exists()
+        assert not Article.objects.filter(
+            status=Article.Status.PUBLISHED.value, first_published_at__isnull=True
+        ).exists()
 
     def test_withdraw_keeps_first_published_at(self) -> None:
         # 正常：撤回→draft 且首发时间保留（database §4 行 6）
