@@ -10,13 +10,20 @@ T-006 任务卡点名用例：test_publish_writes_first_published_at_once、
 test_publish_guard_each_missing_field（参数化×4）、test_publish_atomic_no_partial_write、
 test_withdraw_keeps_first_published_at、test_publish_withdraw_republish_same_fp_at、
 test_publish_idempotent、test_withdraw_idempotent。
+
+T-007 任务卡点名用例：test_tag_casefold_merge、test_tag_strip_before_match、
+test_tag_chinese_random_slug、test_tag_ascii_slugify、test_category_seed_idempotent_rerun；
+test_category_admin_add_delete_forbidden 随 Admin 禁增删子项延期至 T-023
+（本卡白名单无 admin.py——T-005 评审建议③指定路径）。
 """
 
+import importlib
 import itertools
 import re
 import secrets
 
 import pytest
+from django.apps import apps
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.utils import timezone
@@ -245,3 +252,62 @@ class TestStateMachine:
         article.refresh_from_db()
         assert article.status == Article.Status.DRAFT.value
         assert article.first_published_at == fp
+
+
+class TestTagNormalization:
+    """T-007 标签归一化（database §3.3 + DM-2：应用层归一化，DB 精确唯一兜底）。"""
+
+    def test_tag_casefold_merge(self) -> None:
+        # 正常：Python/python/"  PYTHON " 保存后是同一标签（latin 大小写不敏感唯一）
+        first = Tag(name="Python")
+        first.save()
+        second = Tag(name="python")
+        second.save()
+        third = Tag(name="  PYTHON  ")
+        third.save()
+        assert Tag.objects.count() == 1
+        assert second.pk == first.pk == third.pk
+        first.refresh_from_db()
+        assert first.name == "Python"
+
+    def test_tag_strip_before_match(self) -> None:
+        # 边界：首尾空格先 strip 再入库/匹配（§3.3"保存前 strip"）
+        tag = Tag(name="  Django  ")
+        tag.save()
+        assert tag.name == "Django"
+        twin = Tag(name="django")
+        twin.save()
+        assert Tag.objects.count() == 1
+        assert twin.pk == tag.pk
+
+    def test_tag_chinese_random_slug(self) -> None:
+        # 正常：中文名 → 6 位随机短串 slug（§3.3；抽 3 个验字符集）
+        for name in ("机器学习", "线性代数", "大模型"):
+            tag = Tag(name=name)
+            tag.save()
+            assert re.fullmatch(r"[0-9A-Za-z]{6}", tag.slug), (name, tag.slug)
+
+    def test_tag_ascii_slugify(self) -> None:
+        # 正常：ASCII 名 → slugify（小写+连字符，§3.3）
+        tag = Tag(name="Docker Compose")
+        tag.save()
+        assert tag.slug == "docker-compose"
+        upper = Tag(name="PYTHON")
+        upper.save()
+        assert upper.slug == "python"
+
+
+class TestCategorySeed:
+    """T-007 分类三行种子（database §3.2 + DM-7：数据迁移可重放，拒 fixtures）。"""
+
+    def test_category_seed_idempotent_rerun(self) -> None:
+        # 边界：种子迁移重放任意遍，库中恰好 3 行且数据正确（迁移随 migrate 已跑过 1 次）
+        module = importlib.import_module("blog.migrations.0002_category_seed")
+        module.seed_categories(apps, None)
+        module.seed_categories(apps, None)
+        assert Category.objects.count() == 3
+        assert {(c.name, c.slug, c.sort_order) for c in Category.objects.all()} == {
+            ("技术文章", "tech", 1),
+            ("项目实践", "practice", 2),
+            ("学习复盘", "notes", 3),
+        }
