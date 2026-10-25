@@ -5,3 +5,7 @@ Django==5.2.18
 
 # .env 加载（dev/本地读取 8 个环境变量，deployment §8；选型 v1.2 增补，2026-10-24 用户批准）
 python-dotenv==1.2.4
+
+# 图片处理（Project.cover ImageField 必需——Django 无 Pillow 系统检查报 E210 启动失败；
+# 原计划 T-029 引入，v4.3 提前至 T-008，2026-10-25 用户批准；T-029 重编码/EXIF 剥离复用）
+Pillow==13.0.0
