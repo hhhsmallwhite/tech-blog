@@ -1,13 +1,31 @@
 """projects 域模型——database-design §3.5 逐字段对照（T-008，⚠M）。
 
-字段/约束/索引以数据字典为准；业务行为（封面随机文件名、上传校验）属
-core.uploads（T-029），本模型只落库结构。
+字段/约束/索引以数据字典为准；封面随机文件名在本模块实现（§3.5"随机命名"），
+上传的格式校验与重编码剥 EXIF 属 core.uploads（T-013）。
 """
+
+import os
+import secrets
+import string
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 TECH_STACK_ITEM_MAX_LENGTH = 30  # 技术栈单项字数上限（database §3.5）
+COVER_NAME_LENGTH = 8  # 封面随机名 base62-8（api §4 媒体路径示例同长 xK92mQa1）
+_COVER_ALPHABET = string.ascii_letters + string.digits
+
+
+def cover_upload_to(_instance: Project, filename: str) -> str:
+    """封面存储路径：covers/年/月/base62-8 随机名 + 原扩展名（小写）。
+
+    随机名使 URL 与内容编辑解耦、不可猜测（database §3.5"随机命名"；
+    语义与文章 slug 一致——§6）。年月按 TIME_ZONE 本地时间分桶。
+    """
+    ext = os.path.splitext(filename)[1].lower()
+    rand = "".join(secrets.choice(_COVER_ALPHABET) for _ in range(COVER_NAME_LENGTH))
+    return f"covers/{timezone.localtime():%Y/%m}/{rand}{ext}"
 
 
 class Project(models.Model):
@@ -25,7 +43,7 @@ class Project(models.Model):
     responsibilities = models.TextField("职责", help_text="多行纯文本")
     cover = models.ImageField(
         "封面图",
-        upload_to="covers/%Y/%m/",
+        upload_to=cover_upload_to,
         blank=True,
         default="",
         help_text="封面缺失时模板以占位图兜底（api §4 P6）",

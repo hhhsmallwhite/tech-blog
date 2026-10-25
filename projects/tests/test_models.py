@@ -5,13 +5,14 @@ test_status_choices_default、test_project_ordering_updated_desc。
 """
 
 import datetime
+import re
 
 import pytest
-
-pytestmark = pytest.mark.django_db
 from django.core.exceptions import ValidationError
 
-from projects.models import Project
+from projects.models import Project, cover_upload_to
+
+pytestmark = pytest.mark.django_db
 
 
 def make_project(**overrides: object) -> Project:
@@ -73,3 +74,20 @@ class TestOrdering:
         )
         names = list(Project.objects.values_list("name", flat=True))
         assert names == ["新项目", "旧项目"]
+
+
+class TestCoverRandomName:
+    def test_cover_random_filename(self) -> None:
+        # 边界：随机名 base62-8 + 原扩展名小写 + 年/月目录（database §3.5 随机命名）
+        path = cover_upload_to(None, "封面.PNG")
+        assert re.fullmatch(r"covers/\d{4}/\d{2}/[0-9A-Za-z]{8}\.png", path)
+        # 两次生成应不同（随机性）
+        assert cover_upload_to(None, "a.jpg") != cover_upload_to(None, "a.jpg")
+
+
+class TestUrlFields:
+    def test_invalid_url_rejected(self) -> None:
+        # 失败：URL 非法被 URLField 拒（验收失败场景行补录，评审第 1 轮建议③）
+        with pytest.raises(ValidationError) as exc_info:
+            make_project(demo_url="not-a-url").full_clean()
+        assert "demo_url" in exc_info.value.message_dict
