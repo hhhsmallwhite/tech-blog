@@ -1,6 +1,6 @@
 """blog 域模型——database-design §3.1～3.4 逐字段对照（T-005，⚠M）。
 
-边界声明：body_md→body_text 的生成管线属 core.content（T-012/T-013 前只落
+边界声明：body_md→body_text 的生成管线属 core.content（T-011/T-012 前只落
 字段）；标签归一化（strip/casefold）与分类三行种子、Admin 禁增删属 T-007；
 发布/撤回状态机与 published() 属 T-006。
 """

@@ -3,7 +3,8 @@
 任务卡点名用例：test_slug_unique_with_retry、test_slug_charset_length_base62_8、
 test_title_required、test_summary_max_200、test_status_default_draft、
 test_category_tag_unique_constraints；另加 slug 不可变守卫用例
-（领单方案 A，2026-10-26 用户拍板）。
+（领单方案 A，2026-10-26 用户拍板）与 test_title_max_120
+（T-005 评审建议①补录，2026-10-26）。
 """
 
 import itertools
@@ -84,6 +85,13 @@ class TestTitleSummaryStatus:
         with pytest.raises(ValidationError) as exc_info:
             make_article(title="").full_clean()
         assert "title" in exc_info.value.message_dict
+
+    def test_title_max_120(self) -> None:
+        # 边界：121 字被拒；120 字通过（评审探针证实后补录，建议①）
+        with pytest.raises(ValidationError) as exc_info:
+            make_article(title="字" * 121).full_clean()
+        assert "title" in exc_info.value.message_dict
+        make_article(title="字" * 120).full_clean()
 
     def test_summary_max_200(self) -> None:
         # 边界：201 字被拒；200 字通过
