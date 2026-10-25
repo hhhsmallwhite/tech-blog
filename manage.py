@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Django 管理入口（默认 dev settings；其他环境用 DJANGO_SETTINGS_MODULE 指定）。"""
 
 import os
