@@ -1,5 +1,6 @@
-# CI 骨架（T-004 交付物）——四步：装依赖 → ruff check → ruff format --check → pytest
-# 门禁渐进启用（development-plan PLN-7）：迁移漂移（T-005 后）、check --deploy（T-031）、
+# CI（T-004 骨架 + T-010 迁移漂移门禁）——五步：装依赖 → ruff check →
+# ruff format --check → makemigrations --check → pytest
+# 门禁渐进启用（development-plan PLN-7）：check --deploy（T-031）、
 # Playwright（T-029）、docker build（T-033）随对应任务逐道加入
 # 第三方 Action 按 commit SHA 固定（全局约束 2：防标签移位的供应链风险）
 
@@ -20,9 +21,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 检出代码
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0（T-010 补全为完整 40 位：T-004 原缺 3 字符）
       - name: 配置 Python 3.14
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0（T-010 补全为完整 40 位）
         with:
           python-version: "3.14"
           cache: pip
@@ -34,5 +35,20 @@ jobs:
         run: .venv/bin/python -m ruff check .
       - name: 门禁 2｜ruff format --check
         run: .venv/bin/python -m ruff format --check .
-      - name: 门禁 3｜pytest
+      - name: 门禁 3｜迁移漂移检查（T-010）
+        # test settings 只认环境变量（deployment §7），CI 无 .env——8 个必需
+        # 变量取值与根 conftest.py 的测试值一致（非密钥）；manage.py 不走
+        # conftest，须在此显式指定 settings 与变量
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.test
+          SECRET_KEY: ci-only-key-not-a-real-secret
+          DEBUG: "False"
+          SITE_URL: "http://127.0.0.1:8000"
+          ALLOWED_HOSTS: "localhost,127.0.0.1"
+          COOKIE_SECURE: "False"
+          BACKUP_DIR: "./backups"
+          HEALTHZ_DISK_THRESHOLD: "10"
+          HEALTHZ_BACKUP_MAX_AGE: "48"
+        run: .venv/bin/python manage.py makemigrations --check --dry-run
+      - name: 门禁 4｜pytest
         run: .venv/bin/python -m pytest
