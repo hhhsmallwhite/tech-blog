@@ -1,8 +1,9 @@
 # 开发任务清单与完成定义（第一版实施计划）
 
-> 文档版本：v4.3
-> 文档状态：**已批准**（v4.0 基线 2026-10-24 用户确认；v4.1/v4.2 微调均 2026-10-24 用户照准；v4.3 微调 2026-10-25 用户照准）
+> 文档版本：v4.4
+> 文档状态：**已批准**（v4.0 基线 2026-10-24 用户确认；v4.1/v4.2 微调均 2026-10-24 用户照准；v4.3 微调 2026-10-25 用户照准；v4.4 修订 2026-10-26 M1 收口——执行按用户 2026-10-26 授权"技术决定按智能体建议直接定"代决，清单与依据记录于 PR）
 > 编写日期：2026-10-23（v4.0 结构整合：2026-10-24）
+> v4.4 修订（2026-10-26 M1 收口，docs/m1-closure 批次）：①**登记缺陷卡 T-042 SQLite PRAGMA 配置**——T-009 领单发现 base.py 注释"WAL 于数据库任务启用"无任何卡承接（文档漂移）：目标=WAL + busy_timeout≈5000ms + synchronous=NORMAL 落 config（database §7/DM-15），白名单=config/settings/base.py、相关测试文件，DoD=TM-DB-04 转正（文件库 journal_mode=wal 断言；测试库内存态差异留说明），排期 M2 内择期，阻塞 TM-DB-04；②**T-023 承接说明**：T-007 延期的 Admin 禁增删挂钩（has_add/delete_permission=False）与 test_category_admin_add_delete_forbidden 落 T-023（其白名单含 blog/admin.py，T-005 评审建议③指定路径）；③M1 实际顺序 T-008→T-005→T-006→T-007→T-009→T-010 已全部完成（PR #3～#8，执行台账 M1 节）。其余零改动
 > v4.0 修订：①通用完成定义迁出为 `definition-of-done.md`（本文 §2 改为指针；"DoD §N"指向该文档）②范围三区/可选增强、风险汇总、用户待办、PLN 决策迁至 `development-plan.md`（§3.4/§12/§14/§15/§16 留指针）③协作细则指向 `development-workflow.md`（原 collaboration-rules.md v1.0 并入，文件已删除）④T-001 白名单按已批准工程初始化方案 v1.0 扩充（+AGENTS.md、.env.example、static/vendor/README.md）⑤41 张任务卡业务内容未改动
 > v4.1 修订（2026-10-24 用户照准）：T-002 提交白名单补充 `config/__init__.py`、`config/tests/__init__.py`（v4.0 字面清单遗漏的包标志文件，缺它 Django 包不可导入）；其余 41 张任务卡内容零改动
 > v4.2 修订（2026-10-24 用户照准）：T-004 提交白名单补充 manage.py 的 shebang 移除（CI 首跑发现 EXE001 跨平台缺陷：Windows 无可执行位致本地检查盲区，Linux CI 报错——CI 上线即捕获的真实缺陷）；其余零改动
