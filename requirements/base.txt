@@ -7,5 +7,5 @@ Django==5.2.18
 python-dotenv==1.2.4
 
 # 图片处理（Project.cover ImageField 必需——Django 无 Pillow 系统检查报 E210 启动失败；
-# 原计划 T-029 引入，v4.3 提前至 T-008，2026-10-25 用户批准；T-029 重编码/EXIF 剥离复用）
+# 原计划 T-013 引入，v4.3 提前至 T-008，2026-10-25 用户批准；T-013 重编码/EXIF 剥离复用）
 Pillow==13.0.0
