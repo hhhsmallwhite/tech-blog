@@ -6,22 +6,32 @@ test_category_tag_unique_constraints；另加 slug 不可变守卫用例
 （领单方案 A，2026-10-26 用户拍板）。
 """
 
+import itertools
 import re
 import secrets
 
 import pytest
-from blog.models import Article, Category, Tag
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+
+from blog.models import Article, Category, Tag
 
 pytestmark = pytest.mark.django_db
 
 _SLUG_RE = re.compile(r"[0-9A-Za-z]{8}")
 
 
+_CATEGORY_SEQ = itertools.count(1)
+
+
 def make_category(**overrides: object) -> Category:
-    """最小合法 Category（种子三行属 T-007，此处仅建表数据）。"""
-    base: dict[str, object] = {"name": "技术文章", "slug": "tech", "sort_order": 1}
+    """最小合法 Category——每次调用产出不重样的 name/slug（种子三行属 T-007）。"""
+    seq = next(_CATEGORY_SEQ)
+    base: dict[str, object] = {
+        "name": f"分类{seq}",
+        "slug": f"cat{seq}",
+        "sort_order": seq,
+    }
     base.update(overrides)
     return Category(**base)
 
@@ -29,6 +39,8 @@ def make_category(**overrides: object) -> Category:
 def make_article(**overrides: object) -> Article:
     """最小合法 Article——缺省字段满足字典必填约束。"""
     category = overrides.pop("category", None) or make_category()
+    if category.pk is None:
+        category.save()
     base: dict[str, object] = {"title": "测试文章", "category": category}
     base.update(overrides)
     return Article(**base)
@@ -91,9 +103,10 @@ class TestTitleSummaryStatus:
 class TestUniqueConstraints:
     def test_category_tag_unique_constraints(self) -> None:
         # 失败：重复一律被拒——Category 名/slug、Tag 名/slug（full_clean 唯一校验）
-        make_category().save()
+        saved = make_category()
+        saved.save()
         with pytest.raises(ValidationError):
-            make_category().full_clean()
+            Category(name=saved.name, slug=saved.slug, sort_order=9).full_clean()
 
         tag = Tag(name="Python", slug="python")
         tag.save()
