@@ -4,6 +4,8 @@
 上传的格式校验与重编码剥 EXIF 属 core.uploads（T-013）。
 """
 
+from __future__ import annotations
+
 import os
 import secrets
 import string
@@ -17,7 +19,7 @@ COVER_NAME_LENGTH = 8  # 封面随机名 base62-8（api §4 媒体路径示例�
 _COVER_ALPHABET = string.ascii_letters + string.digits
 
 
-def cover_upload_to(_instance: "Project", filename: str) -> str:
+def cover_upload_to(_instance: Project, filename: str) -> str:
     """封面存储路径：covers/年/月/base62-8 随机名 + 原扩展名（小写）。
 
     随机名使 URL 与内容编辑解耦、不可猜测（database §3.5"随机命名"；
