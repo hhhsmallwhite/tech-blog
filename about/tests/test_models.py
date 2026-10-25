@@ -5,8 +5,11 @@ test_about_updated_at_auto。
 """
 
 import pytest
-from about.models import AboutPage
+
+pytestmark = pytest.mark.django_db
 from django.core.exceptions import ValidationError
+
+from about.models import AboutPage
 
 
 class TestSolo:

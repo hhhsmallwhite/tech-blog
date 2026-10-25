@@ -7,8 +7,10 @@ test_status_choices_default、test_project_ordering_updated_desc。
 import datetime
 
 import pytest
+
+pytestmark = pytest.mark.django_db
 from django.core.exceptions import ValidationError
-from django.utils import timezone
+
 from projects.models import Project
 
 
@@ -64,10 +66,10 @@ class TestOrdering:
         newer = make_project(name="新项目")
         newer.save()
         Project.objects.filter(pk=older.pk).update(
-            updated_at=datetime.datetime(2026, 1, 1, tzinfo=timezone.utc)
+            updated_at=datetime.datetime(2026, 1, 1, tzinfo=datetime.UTC)
         )
         Project.objects.filter(pk=newer.pk).update(
-            updated_at=datetime.datetime(2026, 10, 1, tzinfo=timezone.utc)
+            updated_at=datetime.datetime(2026, 10, 1, tzinfo=datetime.UTC)
         )
         names = list(Project.objects.values_list("name", flat=True))
         assert names == ["新项目", "旧项目"]
