@@ -1,11 +1,12 @@
 # 开发任务清单与完成定义（第一版实施计划）
 
-> 文档版本：v4.2
-> 文档状态：**已批准**（v4.0 基线 2026-10-24 用户确认；v4.1/v4.2 微调均 2026-10-24 用户照准）
+> 文档版本：v4.3
+> 文档状态：**已批准**（v4.0 基线 2026-10-24 用户确认；v4.1/v4.2 微调均 2026-10-24 用户照准；v4.3 微调 2026-10-25 用户照准）
 > 编写日期：2026-10-23（v4.0 结构整合：2026-10-24）
 > v4.0 修订：①通用完成定义迁出为 `definition-of-done.md`（本文 §2 改为指针；"DoD §N"指向该文档）②范围三区/可选增强、风险汇总、用户待办、PLN 决策迁至 `development-plan.md`（§3.4/§12/§14/§15/§16 留指针）③协作细则指向 `development-workflow.md`（原 collaboration-rules.md v1.0 并入，文件已删除）④T-001 白名单按已批准工程初始化方案 v1.0 扩充（+AGENTS.md、.env.example、static/vendor/README.md）⑤41 张任务卡业务内容未改动
 > v4.1 修订（2026-10-24 用户照准）：T-002 提交白名单补充 `config/__init__.py`、`config/tests/__init__.py`（v4.0 字面清单遗漏的包标志文件，缺它 Django 包不可导入）；其余 41 张任务卡内容零改动
 > v4.2 修订（2026-10-24 用户照准）：T-004 提交白名单补充 manage.py 的 shebang 移除（CI 首跑发现 EXE001 跨平台缺陷：Windows 无可执行位致本地检查盲区，Linux CI 报错——CI 上线即捕获的真实缺陷）；其余零改动
+> v4.3 修订（2026-10-25 用户照准）：①T-008 白名单补充 `projects/tests/__init__.py`、`about/tests/__init__.py`、根 `conftest.py`（pytest-Django 需绑定 test settings 并注入 8 个测试环境变量——T-003 时已声明"绑定随首个模型测试落地"）与 `requirements/base.txt`（+Pillow==13.0.0：原计划 T-029 安装提前——ImageField 无 Pillow 系统检查直接报错 E210，无法通过 T-008 验收；T-029 的 +Pillow 行随之视为已满足）②T-005 白名单补充 `blog/tests/__init__.py`（同类包标志文件）③M1 执行顺序调整为 T-008→T-005→T-006→T-007→T-009→T-010（blog_article.project_id 外键指向 projects_project，需 T-008 先行；两卡声明的前置依赖本就兼容，卡片内容零改动）；其余零改动
 > **目标**：把已批准的设计文档转化为可执行、可测试、可审查、**可举证**的第一版开发任务序列
 > 上游输入（执行者必读，随本计划一起传递）：`requirements-analysis.md` v1.1（已批准）、`technology-decisions.md` v1.0（D-01～D-09 已确认）、`architecture.md`、`database-design.md`、`api-design.md`、`security-design.md`、`deployment-design.md`（五份均 2026-10-23 已批准）
 > 文档边界：只定义任务、依赖、验收、完成定义与执行规则；不含业务代码与测试代码，不执行任何任务
@@ -215,7 +216,7 @@ V1 必须（T-001～T-039）／可选增强／未来规划的权威清单与触�
 - **对应章节**：database §3.1～3.4/§6（DM-1）；需求 §5.1、BR-03
 - **目标**：Article/Category/Tag 及 M2M 表按数据字典逐字段落库
 - **前置依赖**：T-002
-- **修改范围（提交白名单）**：blog/models.py、blog/migrations/0001_initial.py（含框架表）、blog/tests/test_models.py
+- **修改范围（提交白名单）**：blog/models.py、blog/migrations/0001_initial.py（含框架表）、blog/tests/test_models.py、blog/tests/__init__.py（v4.3）
 - **实施内容**：①字段逐项对照 §3.1～3.4：slug CharField(16) 随机 base62-8 冲突重试不可变、summary 200、body_text editable=False、status choices、FK PROTECT/SET_NULL、UNIQUE(slug)、Index(status, first_published_at) ②Category/Tag/中间表 ③迁移 0001（含 auth 等框架表）
 - **验收标准**：预期行为：从零建库后，`sqlite3 .schema` 与数据字典 §3.1～3.4 一致；slug 生成器产出 8 位 base62 且库内唯一。
   - 正常：makemigrations/apply 成功；种子字段约束生效（title 必填、summary ≤200、status 默认 draft）
@@ -263,7 +264,7 @@ V1 必须（T-001～T-039）／可选增强／未来规划的权威清单与触�
 - **对应章节**：database §3.5/3.6、DM-3/DM-4；Q-01/02、FR-08～11
 - **目标**：Project 全字段 + AboutPage 单例落库
 - **前置依赖**：T-002
-- **修改范围（提交白名单）**：projects/{models.py,migrations/}、about/{models.py,migrations/}、projects/tests/test_models.py、about/tests/test_models.py
+- **修改范围（提交白名单）**：projects/{models.py,migrations/}、about/{models.py,migrations/}、projects/tests/test_models.py、about/tests/test_models.py、projects/tests/__init__.py、about/tests/__init__.py、conftest.py（根，v4.3）、requirements/base.txt（仅 +Pillow==13.0.0，v4.3）
 - **实施内容**：①Project：name 80/summary 200/responsibilities 必填、六段 Markdown TextField、tech_stack JSON（≤30 字/项去重）、status 三档、封面 covers/%Y/%m/ 随机名、demo/repo URLField ②AboutPage：get_solo() 单例（get_or_create id=1）、home_summary/bio/direction、三 JSON 字段、clean 至少一项联系方式
 - **验收标准**：预期行为：两域模型与 §3.5/3.6 逐字段一致；AboutPage 全库永远只有 id=1 一行。
   - 正常：必填与默认值符合字典；get_solo() 两次返回同一行
@@ -345,7 +346,7 @@ V1 必须（T-001～T-039）／可选增强／未来规划的权威清单与触�
 - **对应章节**：security §5、M5 卡片；Q-05/D-14、AC-24、FR-16
 - **目标**：`store_image(file) -> (url, path)`，恶意文件进不来、隐私信息出不去
 - **前置依赖**：T-002、T-003
-- **修改范围（提交白名单）**：core/uploads.py（校验存储部分）、core/tests/test_uploads.py、requirements/base.txt（+Pillow）
+- **修改范围（提交白名单）**：core/uploads.py（校验存储部分）、core/tests/test_uploads.py（Pillow 已随 T-008 提前安装，v4.3）
 - **实施内容**：①≤2MB ②Pillow 打开+verify ③格式 ∈ JPEG/PNG/WebP/GIF；SVG 与改后缀伪装拒绝 ④JPEG/PNG/WebP 重编码剥 EXIF、GIF 原样 ⑤base62 随机文件名 ⑥uploads/ 与 covers/ 目录
 - **验收标准**：预期行为：只有四种真实格式且 ≤2MB 的图片被存储；存储结果无 EXIF、文件名不可预测。
   - 正常：四种格式各一张通过并落盘到正确目录
