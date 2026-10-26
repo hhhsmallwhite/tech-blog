@@ -1,9 +1,9 @@
 """blog 域模型——database-design §3.1～3.4 逐字段对照（T-005，⚠M）+ §4 状态机与
-AD-6 可见性总闸（T-006，⚠I）+ §3.2/3.3 标签归一化与分类种子（T-007，⚠M）。
+AD-6 可见性总闸（T-006，⚠I）+ §3.2/3.3 标签归一化与分类种子（T-007，⚠M）+
+body_text 保存即重算（T-012，⚠M）。
 
-边界声明：body_md→body_text 的生成管线属 core.content（T-011/T-012 前只落
-字段；§4"保存时重生成 body_text"随管线落地）；Admin 禁增删挂钩属 T-023
-（本卡白名单无 admin.py——T-005 评审建议③指定路径）。
+边界声明：Admin 禁增删挂钩属 T-023（本文件不含 admin.py——T-005 评审建议③
+指定路径）。
 """
 
 from __future__ import annotations
@@ -15,6 +15,8 @@ from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
 from django.utils.text import slugify
+
+from core.content import markdown_to_text
 
 SLUG_LENGTH = 8  # 随机 base62-8（database §3.1/§6）
 _TAG_SLUG_LENGTH = 6  # 中文标签随机短串长度（database §3.3）
@@ -165,7 +167,8 @@ class Article(models.Model):
         return self.title
 
     def save(self, *args: object, **kwargs: object) -> None:
-        """slug 首存生成、入库后不可变（database §3.1；领单方案 A 守卫）。"""
+        """slug 首存生成、入库后不可变（database §3.1；方案 A 守卫）；
+        body_text 每次保存重算（§4 保存行/DM-6，T-012）。"""
         if not self.slug:
             self.slug = generate_unique_slug()
         elif self.pk is not None:
@@ -178,6 +181,11 @@ class Article(models.Model):
             if original is not None and original != self.slug:
                 msg = "slug 创建后不可变（database §3.1）"
                 raise ValidationError({"slug": msg})
+        self.body_text = markdown_to_text(self.body_md)
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            # 窄更新（publish/withdraw）也要带走重算结果，保证"任何保存后同步"
+            kwargs["update_fields"] = [*update_fields, "body_text"]
         super().save(*args, **kwargs)
 
     def publish(self) -> None:
