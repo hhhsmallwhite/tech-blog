@@ -10,8 +10,6 @@ test_empty_input。纯函数测试（无数据库），白名单=security §4 �
 
 import re
 
-import pytest
-
 from core.content import markdown_to_text, render_markdown
 
 
@@ -106,7 +104,9 @@ class TestRobustness:
 class TestToText:
     def test_to_text_strips_markup(self) -> None:
         # 正常：markdown_to_text 去标记留纯文本（body_text 检索用，database §3.1）
-        text = markdown_to_text("## 标题\n\n**加粗** 正文 与 [链接](https://example.com)")
+        text = markdown_to_text(
+            "## 标题\n\n**加粗** 正文 与 [链接](https://example.com)"
+        )
         assert "标题" in text
         assert "加粗" in text
         assert "链接" in text
