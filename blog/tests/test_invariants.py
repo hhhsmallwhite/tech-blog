@@ -1,14 +1,15 @@
-"""T-009 模型不变量测试全集（database-design §7 一致性不变量 + AC-26）。
+"""T-009 模型不变量测试全集 + T-012 body_text 同步（database-design §7 + AC-26 + DM-6）。
 
-任务卡纪律：本卡只加测试，禁改一切模型实现——发现实现缺陷立新缺陷卡，
-不得顺手改。白名单中 projects/tests/、about/tests/ 不动：用例集中本文件
-（设计裁定，记录于评审请柬）。
+T-009 卡片纪律：只加测试、禁改模型实现（T-012 按其白名单接管 blog/models.py
+保存路径）。projects/tests/、about/tests/ 不动：用例集中本文件（设计裁定，
+记录于评审请柬）。
 
-点名用例：test_published_implies_fp_at、test_delete_category_protected、
+T-009 点名用例：test_published_implies_fp_at、test_delete_category_protected、
 test_delete_project_nulls_articles、test_delete_article_cascades_m2m、
-test_m2m_no_duplicate、test_slug_immutable_on_resave、test_sqlite_pragmas_on；
-body_text 同步两项以 xfail 占位至 T-012 管线落地（转正=删标记，按 DoD 9
-留说明）。
+test_m2m_no_duplicate、test_slug_immutable_on_resave、test_sqlite_pragmas_on。
+T-012 转正（删 xfail 标记，DoD 9 说明在 PR 记录）：test_draft_also_generates_body_text、
+test_body_md_change_regenerates_body_text（原 T-009 占位两名）；另补
+test_body_text_empty_after_body_md_cleared（T-012 验收边界行）。
 """
 
 import pytest
@@ -17,6 +18,7 @@ from django.db.models.deletion import ProtectedError
 
 from blog.models import Article, Tag
 from blog.tests.test_models import make_article
+from core.content import markdown_to_text
 from projects.tests.test_models import make_project
 
 pytestmark = pytest.mark.django_db
@@ -121,33 +123,41 @@ class TestSqlitePragmas:
 
 
 class TestBodyTextSync:
-    """T-012 前 xfail 占位（DM-6 保存时生成；models.py 边界声明 T-011/T-012）。"""
+    """T-012 转正（database §4 保存行/DM-6：保存即重算 body_text）。
 
-    @pytest.mark.xfail(
-        reason="body_text 生成管线属 T-012（database §4 保存行/DM-6）；"
-        "转正=删 xfail 标记并按 DoD 9 留说明",
-        strict=False,
-    )
-    def test_body_text_syncs_on_draft_save(self) -> None:
-        # 正常：draft 保存后 body_md → body_text 已生成（§4"draft 保存"行）
-        article = make_article(body_md="# 标题\n正文")
+    原为 T-009 xfail 占位两项，T-012 实现后删标记转正
+    （DoD 9 说明：转正过程与断言变更记录于 PR 验证记录）。
+    """
+
+    def test_draft_also_generates_body_text(self) -> None:
+        # 正常+边界：草稿保存同样生成；body_text == body_md 去标记结果（§3.1）
+        article = make_article(body_md="# 标题\n\n**加粗** 正文")
         article.save()
+        expected = markdown_to_text("# 标题\n\n**加粗** 正文")
+        assert article.body_text == expected
         assert article.body_text != ""
 
-    @pytest.mark.xfail(
-        reason="body_text 生成管线属 T-012（database §4 保存行/DM-6）；"
-        "转正=删 xfail 标记并按 DoD 9 留说明",
-        strict=False,
-    )
-    def test_body_text_syncs_on_published_save(self) -> None:
-        # 正常：published 保存（改 body_md）→ body_text 同步且 slug/fp 不变（§4 行 5）
+    def test_body_md_change_regenerates_body_text(self) -> None:
+        # 正常：published 保存（改 body_md）→ body_text 重算；slug/fp 不变（§4 行 5）
         article = make_article(summary="摘要", body_md="旧正文")
         article.save()
         article.publish()
+        article.refresh_from_db()
         original_slug = article.slug
-        article.body_md = "新正文"
+        first_fp = article.first_published_at
+        article.body_md = "# 新标题\n新正文"
         article.save()
         article.refresh_from_db()
-        assert article.body_text != ""
+        assert article.body_text == markdown_to_text("# 新标题\n新正文")
         assert article.slug == original_slug
-        assert article.first_published_at is not None
+        assert article.first_published_at == first_fp
+
+    def test_body_text_empty_after_body_md_cleared(self) -> None:
+        # 边界：正文清空后 body_text 为空串（卡片验收边界行）
+        article = make_article(body_md="有一段正文")
+        article.save()
+        assert article.body_text != ""
+        article.body_md = ""
+        article.save()
+        article.refresh_from_db()
+        assert article.body_text == ""
