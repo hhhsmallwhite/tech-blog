@@ -111,8 +111,7 @@ class TestSlugStability:
 class TestSqlitePragmas:
     def test_sqlite_pragmas_on(self) -> None:
         # §7：foreign_keys=ON 是删除矩阵的执行基础；journal_mode 文件库 WAL /
-        # 测试内存库 memory（WAL 完整断言待配置缺陷卡——base.py 注释"数据库任务
-        # 启用"无承接卡，领单时已裁定登记挂账）
+        # 测试内存库 memory（T-042 配置落地后，文件库由 shell 实测 wal 留证）
         with connection.cursor() as cursor:
             cursor.execute("PRAGMA foreign_keys")
             foreign_keys = cursor.fetchone()[0]
@@ -120,6 +119,15 @@ class TestSqlitePragmas:
             journal_mode = cursor.fetchone()[0]
         assert foreign_keys == 1
         assert journal_mode in ("wal", "memory")
+
+    def test_sqlite_pragma_config_declared(self) -> None:
+        # T-042：settings 必须声明 WAL/busy_timeout/synchronous（§7/DM-15）——
+        # 防配置回退的守卫；功能性 wal 验证见执行台账 shell 实测（内存测试库除外）
+        options = connection.settings_dict.get("OPTIONS", {})
+        init_sql = options.get("init_command", "")
+        assert "journal_mode=WAL" in init_sql
+        assert "busy_timeout=5000" in init_sql
+        assert "synchronous=NORMAL" in init_sql
 
 
 class TestBodyTextSync:
