@@ -116,11 +116,21 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# ===== 数据库（SQLite；WAL 于数据库任务启用）=====
+# ===== 数据库（SQLite；WAL/busy_timeout/synchronous 于 T-042 落地，database §7/DM-15）=====
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
+        "OPTIONS": {
+            # 每个新连接执行：开 WAL（持久化到库文件）、忙等 5 秒、
+            # 同步降为 NORMAL（WAL 下折中，DM-15）；foreign_keys 由
+            # Django 默认开启（test_invariants 运行时断言）
+            "init_command": (
+                "PRAGMA journal_mode=WAL;"
+                "PRAGMA busy_timeout=5000;"
+                "PRAGMA synchronous=NORMAL;"
+            ),
+        },
     },
 }
 
