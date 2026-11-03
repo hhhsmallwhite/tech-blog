@@ -98,9 +98,11 @@ class TestRejections:
             b'<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg">'
             b"<script>alert(1)</script></svg>"
         )
-        with override_settings(MEDIA_ROOT=tmp_path):
-            with pytest.raises(UnsupportedTypeError):
-                store_image(_upload(svg, name="evil.svg"))
+        with (
+            override_settings(MEDIA_ROOT=tmp_path),
+            pytest.raises(UnsupportedTypeError),
+        ):
+            store_image(_upload(svg, name="evil.svg"))
         assert list(tmp_path.rglob("*")) == [] or all(
             p.is_dir() for p in tmp_path.rglob("*")
         )
@@ -119,9 +121,8 @@ class TestRejections:
         # 失败语料：真实 PNG 截断 → 魔数在但完整性破坏 → CORRUPT_FILE
         good = _png_bytes()
         truncated = good[: len(good) // 2]
-        with override_settings(MEDIA_ROOT=tmp_path):
-            with pytest.raises(CorruptFileError):
-                store_image(_upload(truncated))
+        with override_settings(MEDIA_ROOT=tmp_path), pytest.raises(CorruptFileError):
+            store_image(_upload(truncated))
 
 
 class TestSizeBoundary:
@@ -137,9 +138,8 @@ class TestSizeBoundary:
         # 边界：2MB+1 → TOO_LARGE，且不落盘
         upload = _upload(_png_bytes())
         upload.size = 2 * MB + 1
-        with override_settings(MEDIA_ROOT=tmp_path):
-            with pytest.raises(TooLargeError):
-                store_image(upload)
+        with override_settings(MEDIA_ROOT=tmp_path), pytest.raises(TooLargeError):
+            store_image(upload)
         assert list(tmp_path.rglob("*.png")) == []
 
 
